@@ -7,8 +7,8 @@ fi
 
 apt remove --purge -y ufw
 
-# Copy this script to /usr/local/sbin/custom-firewall.sh for systemd service
-cp custom-firewall.sh /usr/local/sbin/custom-firewall.sh
+# Copy firewall script to /usr/local/sbin/custom-firewall.sh for systemd service
+cp scripts/custom-firewall.sh /usr/local/sbin/custom-firewall.sh
 chmod +x /usr/local/sbin/custom-firewall.sh
 
 # Install systemd service unit
