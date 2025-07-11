@@ -24,6 +24,7 @@ SCRIPTS=(
     "scripts/configure-chrony.sh"
     "scripts/configure-logrotate.sh"
     "scripts/configure-motd.sh"
+    "scripts/configure-issue.sh"
     "scripts/tcp-harden.sh"
     "scripts/tcp-tune.sh"
     "scripts/file-tune.sh"

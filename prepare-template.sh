@@ -45,74 +45,51 @@ WantedBy=multi-user.target
 EOF
 systemctl enable regen-ssh-keys.service
 
-### Prompt for hostname on first boot
-echo "[*] Creating hostname prompt on first boot..."
-cat << 'EOF' > /usr/local/bin/set-hostname.sh
+### Prompt for hostname on first login
+echo "[*] Creating hostname prompt on first login..."
+cat << 'EOF' > /etc/profile.d/set-hostname.sh
 #!/bin/bash
-read -p "Enter hostname for this system: " NEW_HOSTNAME
-echo "$NEW_HOSTNAME" > /etc/hostname
-hostnamectl set-hostname "$NEW_HOSTNAME"
-touch /etc/hostname_initialized
+if [ "$(id -u)" -eq 0 ] && [ ! -f /etc/hostname_initialized ]; then
+  read -p "Enter hostname for this system: " NEW_HOSTNAME
+  echo "$NEW_HOSTNAME" > /etc/hostname
+  hostnamectl set-hostname "$NEW_HOSTNAME"
+  touch /etc/hostname_initialized
+fi
 EOF
-chmod +x /usr/local/bin/set-hostname.sh
-cat << EOF > /etc/systemd/system/set-hostname.service
-[Unit]
-Description=Prompt for hostname on first boot
-ConditionPathExists=!/etc/hostname_initialized
+chmod +x /etc/profile.d/set-hostname.sh
 
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/set-hostname.sh
-
-[Install]
-WantedBy=multi-user.target
-EOF
-systemctl enable set-hostname.service
-
-### Prompt for hypervisor and install tools on first boot
-echo "[*] Creating hypervisor integration prompt on first boot..."
-cat << 'EOF' > /usr/local/bin/install-hypervisor-tools.sh
+### Prompt for hypervisor and install tools on first login
+echo "[*] Creating hypervisor integration prompt on first login..."
+cat << 'EOF' > /etc/profile.d/install-hypervisor-tools.sh
 #!/bin/bash
-read -p "Enter hypervisor type (kvm/vmware/hyperv/none): " HYPERVISOR
-case "$HYPERVISOR" in
-  kvm)
-    apt update
-    apt install -y qemu-guest-agent spice-vdagent
-    systemctl enable qemu-guest-agent
-    ;;
-  vmware)
-    apt update
-    apt install -y open-vm-tools
-    systemctl enable open-vm-tools
-    ;;
-  hyperv)
-    apt update
-    apt install -y linux-cloud-tools-$(uname -r) linux-tools-$(uname -r)
-    ;;
-  none)
-    echo "Skipping hypervisor integration tools."
-    ;;
-  *)
-    echo "Unknown option. No tools installed."
-    ;;
-esac
-touch /etc/hypervisor_initialized
+if [ "$(id -u)" -eq 0 ] && [ ! -f /etc/hypervisor_initialized ]; then
+  read -p "Enter hypervisor type (kvm/vmware/hyperv/none): " HYPERVISOR
+  case "$HYPERVISOR" in
+    kvm)
+      apt update
+      apt install -y qemu-guest-agent spice-vdagent
+      systemctl enable qemu-guest-agent
+      ;;
+    vmware)
+      apt update
+      apt install -y open-vm-tools
+      systemctl enable open-vm-tools
+      ;;
+    hyperv)
+      apt update
+      apt install -y linux-cloud-tools-$(uname -r) linux-tools-$(uname -r)
+      ;;
+    none)
+      echo "Skipping hypervisor integration tools."
+      ;;
+    *)
+      echo "Unknown option. No tools installed."
+      ;;
+  esac
+  touch /etc/hypervisor_initialized
+fi
 EOF
-chmod +x /usr/local/bin/install-hypervisor-tools.sh
-cat << EOF > /etc/systemd/system/install-hypervisor-tools.service
-[Unit]
-Description=Prompt for hypervisor and install integration tools
-ConditionPathExists=!/etc/hypervisor_initialized
-After=network.target
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/install-hypervisor-tools.sh
-
-[Install]
-WantedBy=multi-user.target
-EOF
-systemctl enable install-hypervisor-tools.service
+chmod +x /etc/profile.d/install-hypervisor-tools.sh
 
 ### Auto-expand root partition on first boot
 echo "[*] Enabling root partition expansion..."
