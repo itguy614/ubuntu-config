@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ $(id -u) -ne 0 ]
+	then echo Please run this script as root or using sudo!
+	exit
+fi
+
 # File System & I/O Tuning Script for Light-Duty Ubuntu Servers (VPN/Web, No Swap)
 # Must be run with root privileges.
 
@@ -30,6 +35,10 @@ declare -A fs_tuning_params=(
     ["vm.dirty_ratio"]=15               # Force flush when 15% of RAM is dirty
     ["vm.dirty_expire_centisecs"]=3000  # Dirty pages considered old after 30 sec
     ["vm.dirty_writeback_centisecs"]=1000 # Background writeback every 10 sec
+
+    # File descriptor limits
+    ["fs.file-max"]=2097152              # Increase max open files to 2097152
+    ["fs.nr_open"]=2097152               # Increase max number of open files to 2097152
 )
 
 # Write sysctl configuration

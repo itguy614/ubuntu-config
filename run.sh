@@ -5,6 +5,8 @@ if [ $(id -u) -ne 0 ]
 	exit
 fi
 
+. "scripts/remove-snaps.sh"
+
 # Update system packages
 apt update
 apt upgrade -y
@@ -20,9 +22,12 @@ SCRIPTS=(
     "scripts/configure-forkbombs.sh"
     "scripts/configure-cron.sh"
     "scripts/configure-chrony.sh"
+    "scripts/configure-logrotate.sh"
+    "scripts/configure-motd.sh"
     "scripts/tcp-harden.sh"
     "scripts/tcp-tune.sh"
     "scripts/file-tune.sh"
+    "scripts/kernel-harden.sh"
 )
 
 for script in "${SCRIPTS[@]}"; do

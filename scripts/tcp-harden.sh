@@ -1,7 +1,11 @@
 #!/bin/bash
 
+if [ $(id -u) -ne 0 ]
+	then echo Please run this script as root or using sudo!
+	exit
+fi
+
 # TCP Hardening Script for Ubuntu Systems
-# Must be run with root privileges.
 
 set -euo pipefail
 

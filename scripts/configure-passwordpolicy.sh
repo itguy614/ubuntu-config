@@ -1,5 +1,10 @@
 #!/bin/sh
 
+if [ $(id -u) -ne 0 ]
+	then echo Please run this script as root or using sudo!
+	exit
+fi
+
 # Secure user accounts
 passwd -l root # Lock the root account
 
