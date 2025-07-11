@@ -1,41 +1,33 @@
 #!/bin/sh
 
 if [ $(id -u) -ne 0 ]
-	then echo Please run this script as root or using sudo!
-	exit
+    then echo Please run this script as root or using sudo!
+    exit
 fi
 
 apt remove --purge -y ufw
 
-iptables -F
-iptables -X
+# Copy this script to /usr/local/sbin/custom-firewall.sh for systemd service
+cp custom-firewall.sh /usr/local/sbin/custom-firewall.sh
+chmod +x /usr/local/sbin/custom-firewall.sh
 
-# Default policies
-iptables -P INPUT DROP
-iptables -P FORWARD DROP
-iptables -P OUTPUT ACCEPT
+# Install systemd service unit
+SERVICE_PATH="/etc/systemd/system/custom-firewall.service"
+cat <<EOF > "$SERVICE_PATH"
+[Unit]
+Description=Custom Firewall Rules
+After=network.target
 
-# Allow loopback
-iptables -A INPUT -i lo -j ACCEPT
-iptables -A OUTPUT -o lo -j ACCEPT
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/custom-firewall.sh
+RemainAfterExit=yes
 
-# Allow established and related traffic
-iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+[Install]
+WantedBy=multi-user.target
+EOF
 
-# Allow SSH
-iptables -A INPUT -p tcp --dport 22 -j ACCEPT
-
-# Allow SNMP
-iptables -A INPUT -p udp --dport 161 -j ACCEPT
-
-# Allow ICMP echo requests (ping)
-iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
-iptables -A OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT
-
-# Allow multicast UDP traffic
-iptables -A INPUT -p udp -d 224.0.0.0/4 -j ACCEPT
-iptables -A OUTPUT -p udp -d 224.0.0.0/4 -j ACCEPT
-
-# Allow IGMP
-iptables -A INPUT -p igmp -d 224.0.0.0/4 -j ACCEPT
-iptables -A OUTPUT -p igmp -d 224.0.0.0/4 -j ACCEPT
+# Reload systemd, enable and start the service
+systemctl daemon-reload
+systemctl enable custom-firewall
+systemctl restart custom-firewall
