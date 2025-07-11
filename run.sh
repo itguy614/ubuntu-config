@@ -9,45 +9,29 @@ fi
 apt update
 apt upgrade -y
 
-# Install essential security tools
-apt install -y ufw fail2ban
+# Define an array of scripts to run
+SCRIPTS=(
+    "scripts/configure-firewall.sh"
+    "scripts/configure-fail2ban.sh"
+    "scripts/configure-sshd.sh"
+    "scripts/configure-autoupdate.sh"
+    "scripts/configure-passwordpolicy.sh"
+    "scripts/configuer-auditd.sh"
+    "scripts/configure-forkbombs.sh"
+    "scripts/configure-cron.sh"
+    "scripts/configure-chrony.sh"
+    "scripts/tcp-harden.sh"
+    "scripts/tcp-tune.sh"
+    "scripts/file-tune.sh"
+)
 
-# Configure firewall
-ufw default deny incoming
-ufw default allow outgoing
-ufw allow ssh/tcp
-ufw enable
-systemctl enable ufw
+for script in "${SCRIPTS[@]}"; do
+    if [ -f "$script" ]; then
+        . "$script"
+    else
+        echo "Warning: $script not found. Skipping."
+    fi
+done
 
-# Enable Fail2Ban
-systemctl enable fail2ban
-cp /etc/fail2ban/jail.{conf,local}
-echo "[sshd]" >> /etc/fail2ban/jail.local
-echo "enabled = true" >> /etc/fail2ban/jail.local
-
-# Secure SSH configuration
-sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
-sed -i 's/#PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
-systemctl restart sshd
-
-# Secure user accounts
-passwd -l root # Lock the root account
-
-# Configure automatic security updates
-apt install -y unattended-upgrades
-dpkg-reconfigure --priority=low unattended-upgrades
-
-# Set strong password policy
-apt install -y libpam-pwquality
-sed -i 's/password requisite pam_pwquality.so retry=3/password requisite pam_pwquality.so retry=3 minlen=12 minclass=2 minclassrepeat=3 maxrepeat=3/' /etc/security/pwquality.conf
-sed -i 's/password requisite pam_unix.so sha512/password requisite pam_unix.so sha512 minlen=8 remember=5/' /etc/pam.d/common-password
-
-# Harden cron jobs
-chmod 750 /etc/crontab
-chmod 750 /etc/cron.hourly
-chmod 750 /etc/cron.daily
-chmod 750 /etc/cron.weekly
-chmod 750 /etc/cron.monthly
-chmod 750 /etc/cron.d
-
-source scripts/tcp-harden.sh
+# Remove unnecessary packages
+apt autoremove --purge -y
