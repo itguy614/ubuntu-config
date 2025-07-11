@@ -57,6 +57,7 @@ if id -nG | grep -qw sudo && [ ! -f /etc/hostname_initialized ]; then
 fi
 EOF
 chmod +x /etc/profile.d/set-hostname.sh
+rm -f /etc/hostname_initialized
 
 ### Prompt for hypervisor and install tools on first login
 echo "[*] Creating hypervisor integration prompt on first login..."
@@ -89,6 +90,7 @@ if id -nG | grep -qw sudo && [ ! -f /etc/hypervisor_initialized ]; then
   sudo touch /etc/hypervisor_initialized
 fi
 EOF
+rm -f /etc/hypervisor_initialized
 chmod +x /etc/profile.d/install-hypervisor-tools.sh
 
 ### Auto-expand root partition on first boot
