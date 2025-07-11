@@ -5,24 +5,37 @@ if [ $(id -u) -ne 0 ]
 	exit
 fi
 
-apt install -y ufw
+apt remove --purge -y ufw
 
-# Configure firewall
-ufw default deny incoming
-ufw default allow outgoing
-ufw allow ssh/tcp
+iptables -F
+iptables -X
 
-# Allow snmp
-ufw allow 161/udp
+# Default policies
+iptables -P INPUT DROP
+iptables -P FORWARD DROP
+iptables -P OUTPUT ACCEPT
+
+# Allow loopback
+iptables -A INPUT -i lo -j ACCEPT
+iptables -A OUTPUT -o lo -j ACCEPT
+
+# Allow established and related traffic
+iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# Allow SSH
+iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+
+# Allow SNMP
+iptables -A INPUT -p udp --dport 161 -j ACCEPT
 
 # Allow ICMP echo requests (ping)
 iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
+iptables -A OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT
 
-## Allow multicast traffic
-ufw allow in proto udp to 224.0.0.0/4
-ufw allow in proto udp from 224.0.0.0/4
+# Allow multicast UDP traffic
+iptables -A INPUT -p udp -d 224.0.0.0/4 -j ACCEPT
+iptables -A OUTPUT -p udp -d 224.0.0.0/4 -j ACCEPT
 
-
-ufw enable
-systemctl start ufw
-systemctl enable ufw
+# Allow IGMP
+iptables -A INPUT -p igmp -d 224.0.0.0/4 -j ACCEPT
+iptables -A OUTPUT -p igmp -d 224.0.0.0/4 -j ACCEPT
