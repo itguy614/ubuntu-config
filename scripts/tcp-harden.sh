@@ -49,24 +49,19 @@ declare -A tcp_hardening_params=(
     # Port range
     ["net.ipv4.ip_local_port_range"]="1024 65535"
 
-    # TCP tuning
-    ["net.ipv4.tcp_fin_timeout"]=15
-    ["net.ipv4.tcp_keepalive_intvl"]=15
-    ["net.ipv4.tcp_keepalive_probes"]=5
-    ["net.ipv4.tcp_keepalive_time"]=300
-    ["net.ipv4.tcp_max_syn_backlog"]=2048
-    ["net.ipv4.tcp_rfc1337"]=1
-    ["net.ipv4.tcp_syn_retries"]=2
-    ["net.ipv4.tcp_synack_retries"]=2
-    ["net.ipv4.tcp_syncookies"]=1
-    ["net.ipv4.tcp_timestamps"]=0
-    # ["net.ipv4.tcp_tw_recycle"]=0
-    ["net.ipv4.tcp_tw_reuse"]=1
-    ["net.ipv4.tcp_window_scaling"]=0
+    # ICMP rate limiting
+    ["net.ipv4.icmp_ratelimit"]=100
+    ["net.ipv4.icmp_ratemask"]="0x1f"
+
+    # Shared media
+    ["net.ipv4.conf.all.shared_media"]=0
+    ["net.ipv4.conf.all.arp_filter"]=1
+
 
     # Disable IPv6 if not used
     ["net.ipv6.conf.all.disable_ipv6"]=1
     ["net.ipv6.conf.default.disable_ipv6"]=1
+    ["net.ipv6.conf.lo.disable_ipv6"]=1
 )
 
 # Create a fresh drop-in sysctl file

@@ -42,16 +42,31 @@ declare -A tcp_tuning_params=(
 
     # TCP backlog, timeouts, latency
     ["net.ipv4.tcp_max_syn_backlog"]=8192
-    ["net.ipv4.tcp_fin_timeout"]=10
+    ["net.ipv4.tcp_fin_timeout"]=15
     ["net.ipv4.tcp_low_latency"]=1
 
     # Enable BBR (if supported)
     ["net.core.default_qdisc"]="fq"
     ["net.ipv4.tcp_congestion_control"]="bbr"
 
-    # Security enhancements
-    ["net.ipv4.conf.all.shared_media"]=0
-    ["net.ipv4.conf.all.arp_filter"]=1
+    # TCP keepalive settings
+    ["net.ipv4.tcp_keepalive_time"]=7200
+    ["net.ipv4.tcp_keepalive_intvl"]=15
+    ["net.ipv4.tcp_keepalive_probes"]=5
+    ["net.ipv4.tcp_keepalive_time"]=300
+
+    # Syn cookies
+    ["net.ipv4.tcp_max_syn_backlog"]=2048
+    ["net.ipv4.tcp_rfc1337"]=1
+    ["net.ipv4.tcp_syn_retries"]=2
+    ["net.ipv4.tcp_synack_retries"]=2
+    ["net.ipv4.tcp_syncookies"]=1
+
+    # Disable TCP timestamps
+    ["net.ipv4.tcp_timestamps"]=0
+
+    # Disable TCP window scaling (if not needed)
+    ["net.ipv4.tcp_window_scaling"]=0
 
     # Optional: connection tracking (useful for NAT/firewall servers)
     ["net.netfilter.nf_conntrack_max"]=262144
