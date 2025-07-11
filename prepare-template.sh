@@ -25,7 +25,12 @@ ln -s /etc/machine-id /var/lib/dbus/machine-id
 ### Remove SSH host keys (regenerate on boot)
 echo "[*] Removing SSH host keys..."
 rm -f /etc/ssh/ssh_host_*
-cat << 'EOF' > /etc/systemd/system/regen-ssh-keys.service
+cat << 'EOF' > /usr/local/bin/regen-ssh-keys.sh
+#!/bin/bash
+/usr/bin/ssh-keygen -A
+EOF
+chmod +x /usr/local/bin/regen-ssh-keys.sh
+cat << EOF > /etc/systemd/system/regen-ssh-keys.service
 [Unit]
 Description=Regenerate SSH host keys
 Before=ssh.service
@@ -33,7 +38,7 @@ ConditionPathExists=!/etc/ssh/ssh_host_rsa_key
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/ssh-keygen -A
+ExecStart=/usr/local/bin/regen-ssh-keys.sh
 
 [Install]
 WantedBy=multi-user.target
@@ -42,19 +47,22 @@ systemctl enable regen-ssh-keys.service
 
 ### Prompt for hostname on first boot
 echo "[*] Creating hostname prompt on first boot..."
-cat << 'EOF' > /etc/systemd/system/set-hostname.service
+cat << 'EOF' > /usr/local/bin/set-hostname.sh
+#!/bin/bash
+read -p "Enter hostname for this system: " NEW_HOSTNAME
+echo "$NEW_HOSTNAME" > /etc/hostname
+hostnamectl set-hostname "$NEW_HOSTNAME"
+touch /etc/hostname_initialized
+EOF
+chmod +x /usr/local/bin/set-hostname.sh
+cat << EOF > /etc/systemd/system/set-hostname.service
 [Unit]
 Description=Prompt for hostname on first boot
 ConditionPathExists=!/etc/hostname_initialized
 
 [Service]
 Type=oneshot
-ExecStart=/bin/bash -c '
-  read -p "Enter hostname for this system: " NEW_HOSTNAME
-  echo "$NEW_HOSTNAME" > /etc/hostname
-  hostnamectl set-hostname "$NEW_HOSTNAME"
-  touch /etc/hostname_initialized
-'
+ExecStart=/usr/local/bin/set-hostname.sh
 
 [Install]
 WantedBy=multi-user.target
@@ -63,7 +71,35 @@ systemctl enable set-hostname.service
 
 ### Prompt for hypervisor and install tools on first boot
 echo "[*] Creating hypervisor integration prompt on first boot..."
-cat << 'EOF' > /etc/systemd/system/install-hypervisor-tools.service
+cat << 'EOF' > /usr/local/bin/install-hypervisor-tools.sh
+#!/bin/bash
+read -p "Enter hypervisor type (kvm/vmware/hyperv/none): " HYPERVISOR
+case "$HYPERVISOR" in
+  kvm)
+    apt update
+    apt install -y qemu-guest-agent spice-vdagent
+    systemctl enable qemu-guest-agent
+    ;;
+  vmware)
+    apt update
+    apt install -y open-vm-tools
+    systemctl enable open-vm-tools
+    ;;
+  hyperv)
+    apt update
+    apt install -y linux-cloud-tools-$(uname -r) linux-tools-$(uname -r)
+    ;;
+  none)
+    echo "Skipping hypervisor integration tools."
+    ;;
+  *)
+    echo "Unknown option. No tools installed."
+    ;;
+esac
+touch /etc/hypervisor_initialized
+EOF
+chmod +x /usr/local/bin/install-hypervisor-tools.sh
+cat << EOF > /etc/systemd/system/install-hypervisor-tools.service
 [Unit]
 Description=Prompt for hypervisor and install integration tools
 ConditionPathExists=!/etc/hypervisor_initialized
@@ -71,32 +107,7 @@ After=network.target
 
 [Service]
 Type=oneshot
-ExecStart=/bin/bash -c '
-  read -p "Enter hypervisor type (kvm/vmware/hyperv/none): " HYPERVISOR
-  case "$HYPERVISOR" in
-    kvm)
-      apt update
-      apt install -y qemu-guest-agent spice-vdagent
-      systemctl enable qemu-guest-agent
-      ;;
-    vmware)
-      apt update
-      apt install -y open-vm-tools
-      systemctl enable open-vm-tools
-      ;;
-    hyperv)
-      apt update
-      apt install -y linux-cloud-tools-$(uname -r) linux-tools-$(uname -r)
-      ;;
-    none)
-      echo "Skipping hypervisor integration tools."
-      ;;
-    *)
-      echo "Unknown option. No tools installed."
-      ;;
-  esac
-  touch /etc/hypervisor_initialized
-'
+ExecStart=/usr/local/bin/install-hypervisor-tools.sh
 
 [Install]
 WantedBy=multi-user.target
@@ -106,15 +117,20 @@ systemctl enable install-hypervisor-tools.service
 ### Auto-expand root partition on first boot
 echo "[*] Enabling root partition expansion..."
 apt install -y cloud-guest-utils gdisk
-cat << 'EOF' > /etc/systemd/system/resize-rootfs.service
+cat << 'EOF' > /usr/local/bin/resize-rootfs.sh
+#!/bin/bash
+/usr/bin/growpart /dev/sda 1
+/sbin/resize2fs /dev/sda1
+EOF
+chmod +x /usr/local/bin/resize-rootfs.sh
+cat << EOF > /etc/systemd/system/resize-rootfs.service
 [Unit]
 Description=Resize root filesystem
 After=multi-user.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/growpart /dev/sda 1
-ExecStart=/sbin/resize2fs /dev/sda1
+ExecStart=/usr/local/bin/resize-rootfs.sh
 
 [Install]
 WantedBy=multi-user.target
