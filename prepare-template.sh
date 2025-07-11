@@ -124,7 +124,7 @@ systemctl enable resize-rootfs.service
 ### Install generic kernel
 echo "[*] Installing generic kernel..."
 apt install -y linux-generic
-apt purge -y 'linux-image-*cloud*' || true
+apt autoremove --purge -y
 
 ### Cleanup logs, identifiers, and sensitive files
 echo "[*] Cleaning up logs, APT cache, and temporary files..."
