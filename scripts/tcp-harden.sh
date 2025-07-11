@@ -60,7 +60,7 @@ declare -A tcp_hardening_params=(
     ["net.ipv4.tcp_synack_retries"]=2
     ["net.ipv4.tcp_syncookies"]=1
     ["net.ipv4.tcp_timestamps"]=0
-    ["net.ipv4.tcp_tw_recycle"]=0
+    # ["net.ipv4.tcp_tw_recycle"]=0
     ["net.ipv4.tcp_tw_reuse"]=1
     ["net.ipv4.tcp_window_scaling"]=0
 
