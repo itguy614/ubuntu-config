@@ -49,11 +49,11 @@ systemctl enable regen-ssh-keys.service
 echo "[*] Creating hostname prompt on first login..."
 cat << 'EOF' > /etc/profile.d/set-hostname.sh
 #!/bin/bash
-if [ "$(id -u)" -eq 0 ] && [ ! -f /etc/hostname_initialized ]; then
+if id -nG | grep -qw sudo && [ ! -f /etc/hostname_initialized ]; then
   read -p "Enter hostname for this system: " NEW_HOSTNAME
-  echo "$NEW_HOSTNAME" > /etc/hostname
-  hostnamectl set-hostname "$NEW_HOSTNAME"
-  touch /etc/hostname_initialized
+  echo "$NEW_HOSTNAME" | sudo tee /etc/hostname > /dev/null
+  sudo hostnamectl set-hostname "$NEW_HOSTNAME"
+  sudo touch /etc/hostname_initialized
 fi
 EOF
 chmod +x /etc/profile.d/set-hostname.sh
@@ -62,22 +62,22 @@ chmod +x /etc/profile.d/set-hostname.sh
 echo "[*] Creating hypervisor integration prompt on first login..."
 cat << 'EOF' > /etc/profile.d/install-hypervisor-tools.sh
 #!/bin/bash
-if [ "$(id -u)" -eq 0 ] && [ ! -f /etc/hypervisor_initialized ]; then
+if id -nG | grep -qw sudo && [ ! -f /etc/hypervisor_initialized ]; then
   read -p "Enter hypervisor type (kvm/vmware/hyperv/none): " HYPERVISOR
   case "$HYPERVISOR" in
     kvm)
-      apt update
-      apt install -y qemu-guest-agent spice-vdagent
-      systemctl enable qemu-guest-agent
+      sudo apt update
+      sudo apt install -y qemu-guest-agent spice-vdagent
+      sudo systemctl enable qemu-guest-agent
       ;;
     vmware)
-      apt update
-      apt install -y open-vm-tools
-      systemctl enable open-vm-tools
+      sudo apt update
+      sudo apt install -y open-vm-tools
+      sudo systemctl enable open-vm-tools
       ;;
     hyperv)
-      apt update
-      apt install -y linux-cloud-tools-$(uname -r) linux-tools-$(uname -r)
+      sudo apt update
+      sudo apt install -y linux-cloud-tools-$(uname -r) linux-tools-$(uname -r)
       ;;
     none)
       echo "Skipping hypervisor integration tools."
@@ -86,7 +86,7 @@ if [ "$(id -u)" -eq 0 ] && [ ! -f /etc/hypervisor_initialized ]; then
       echo "Unknown option. No tools installed."
       ;;
   esac
-  touch /etc/hypervisor_initialized
+  sudo touch /etc/hypervisor_initialized
 fi
 EOF
 chmod +x /etc/profile.d/install-hypervisor-tools.sh
