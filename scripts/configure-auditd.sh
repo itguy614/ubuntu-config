@@ -10,7 +10,7 @@ AUDIT_RULES_FILE="/etc/audit/rules.d/audit.rules"
 
 add_audit_rule() {
     local rule="$1"
-    grep -Fxq "$rule" "$AUDIT_RULES_FILE" || echo "$rule" >> "$AUDIT_RULES_FILE"
+    grep -qxF '$rule' "$AUDIT_RULES_FILE" || echo "$rule" >> "$AUDIT_RULES_FILE"
 }
 
 add_audit_rule "-w /etc/ssh/sshd_config -p wa -k sshd_config"
