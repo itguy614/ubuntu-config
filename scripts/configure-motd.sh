@@ -41,9 +41,9 @@ RELEASE_UPGRADE=$(do-release-upgrade -c 2>/dev/null | grep -q "New release" && e
 
 # Display the MOTD
 cat <<EOM
-Welcome to $HOSTNAME!
+
+$HOSTNAME ($OS_VERSION)
 --------------------------------------------------------------------------------
-Operating System: $OS_VERSION
 Uptime: $UPTIME
 Memory Usage: $MEMORY
 
@@ -58,6 +58,7 @@ Release Upgrade Available: $RELEASE_UPGRADE
                         Unauthorized access is prohibited.
                      All activities are monitored and logged.
 ********************************************************************************
+
 EOM
 EOF
 

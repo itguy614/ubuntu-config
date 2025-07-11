@@ -20,10 +20,9 @@ OS=$(lsb_release -d | awk -F"\t" '{print $2}')
 
 # Create a custom /etc/issue
 cat > "$ISSUE_FILE" <<EOF
-############################################################
-Welcome to $HOSTNAME
-Operating System: $OS
-############################################################
+$HOSTNAME ($OS)
+Unauthorized access is prohibited.
+--------------------------------------------------------------------------------
 EOF
 
 # Remove existing /etc/issue.net if it exists and create a symlink
